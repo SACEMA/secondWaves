@@ -1,6 +1,7 @@
 library(dplyr)
 library(ggplot2)
 source('plottingFunctions.R')
+source('featureFunctions.R')
 dat <- read.csv('2020-08-30_owid-covid-data.csv', as.is = TRUE)
 dat$date <- as.Date(dat$date)
 
