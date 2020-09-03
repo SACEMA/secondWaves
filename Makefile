@@ -39,7 +39,8 @@ setup: isosetup
 
 demo: $(patsubst %,${OUTDIR}/%/result.rds,KEN JPN ZAF PAK USA ESP)
 
-demofigs: $(patsubst %,${FIGDIR}/%.png,KEN JPN ZAF PAK USA ESP)
+demofigs: $(patsubst %,${FIGDIR}/%.png,KEN JPN ZAF PAK USA ESP SWE SVN PRT) \
+	$(patsubst %,${FIGDIR}/%.png,CZE PER ISR FIN AUS BEL DNK FRA NLD SGP KOR MUS LVA)
 
 ${OUTDIR}/consolidated.rds: consolidate.R $(wildcard results/*/result.rds)
 	Rscript $< ${OUTDIR} $@

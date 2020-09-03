@@ -24,15 +24,15 @@ ref <- readRDS(rawpth)[
   keyby = .(iso_code, location, date)
 ][7:.N]
 
-ref[, zz := ZigZag(new_cases_smoothed_per_million) ]
+ref[, zz := ZigZag(new_cases_smoothed_per_million, 15) ]
 
 ref[, annotation := NA_character_ ]
 
 source(funspth)
 
 ref[find_uptick(new_cases_smoothed_per_million, len = 5), annotation := "uptick" ]
-ref[find_peaks(zz, m = 10), annotation := "peak" ]
-ref[find_valleys(zz, m = 10, inclTail = FALSE), annotation := "valley"]
+ref[find_peaks(zz, m = 14), annotation := "peak" ]
+# ref[find_valleys(zz, m = 10, inclTail = FALSE), annotation := "valley"]
 
 # TODO: not quite there
 wave_end_thresholds <- ref[
