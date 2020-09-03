@@ -28,7 +28,7 @@ ${DATADIR}/isos.csv: get_isos.R ${DATADIR}/owid.rds
 isosetup: ${DATADIR}/isos.csv ${OUTDIR}
 	while read line; do mkdir -p "${OUTDIR}/$${line}"; done < $<
 
-${OUTDIR}/%/result.rds: analyze.R ${DATADIR}/owid.rds | isosetup
+${OUTDIR}/%/result.rds: analyze.R ${DATADIR}/owid.rds featureFunctions.R | isosetup
 	${Rstar}
 
 setup: isosetup

@@ -16,29 +16,20 @@ find_peaks <- function (x, m = 7, inclMax = T, inclTail = T, minVal = 10, browse
   if(inclMax) pks <- sort(unique(pks, which.max(x)))
   pks
 }
+
 find_valleys <- function(x, m = 7, inclMin = T, inclTail = T){
   find_peaks(-x, m, inclMin, inclTail, minVal = 0.001)
 }
 
-find_uptick <- function(dd, len = 7, usePositivity = F, prospective = F, down = FALSE){
+find_uptick <- function(x, len = 7, prospective = F, down = FALSE){
   # Based on: https://masterr.org/r/how-to-find-consecutive-repeats-in-r/
   lookFor <- ifelse(down, -1, 1)
-  if(usePositivity){
-    rr <- rle(sign(diff(dd$positive_rate)))
-  }else{
-    rr <- rle(sign(diff(dd$new_cases_smoothed_per_million)))
-  }
+  rr <- rle(sign(diff(x)))
   if(any(rr$values == lookFor & rr$lengths >= len)){
     use_runs <- which(rr$values == lookFor & rr$lengths >= len)
     ends <- cumsum(rr$lengths)[use_runs]
-    starts <- cumsum(rr$lengths)[use_runs-1] + 1
-    st_dates <- dd$date[starts]
-    if(prospective){
-      return(st_dates[st_dates > dd$date[which.max(dd$new_cases_smoothed_per_million)]])
-    }else{
-      return(st_dates)  
-    }
-  }else{
+    return(cumsum(rr$lengths)[use_runs-1] + 1)
+  } else{
     return(NA)
   }
 }
