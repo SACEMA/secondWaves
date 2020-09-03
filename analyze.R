@@ -61,6 +61,9 @@ wave_end_thresholds[,{
   ]
 }, by=.(wavedate = date)]
 
+#' TODO: from USA example:
+#'  - don't set / undo valley label if not in below territory
+
 #' @examples 
 #' require(ggplot2)
 #' ggplot(ref) + 
