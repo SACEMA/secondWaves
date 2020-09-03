@@ -1,10 +1,10 @@
-det_plot <- function(dat, lineDec = TRUE, lineInc = TRUE){
+det_plot <- function(dat, lineDec = TRUE, lineInc = TRUE, endWave1 = 0.1, startWave2 = 1/3){
   maxval <- max(dat$new_cases_smoothed_per_million, na.rm = TRUE)
   (ggplot(dat) 
     + aes(x = date, y = new_cases_smoothed_per_million) 
     + geom_line() 
-    + {if(lineDec) geom_hline(yintercept = maxval*0.1, linetype=3)}
-    + {if(lineInc) geom_hline(yintercept = maxval*1/3, linetype=1)}
+    + {if(lineDec) geom_hline(yintercept = maxval*endWave1, linetype=3)}
+    + {if(lineInc) geom_hline(yintercept = maxval*startWave2, linetype=1)}
     + facet_wrap(~location, scales = 'free') 
     + xlab('Date') 
     + ylab('New detections / million pop')
@@ -63,8 +63,15 @@ three_plot <- function(loc, strCol = 'black', plotPeaks = F, plotVals = F, dd = 
 }
 
 uptick_plot <- function(dat, th = 5){
-  det_plot(dat) + geom_vline(xintercept = find_uptick(dat, 5)) + geom_vline(xintercept = find_uptick(dat, 5, usePositivity = T), color = 'red', linetype = 3)
+  (det_plot(dat) 
+   + geom_vline(xintercept = find_uptick(dat, th)) 
+   + geom_vline(xintercept = find_uptick(dat, th, usePositivity = T), color = 'red', linetype = 3)
+   )
 }
+
 downtick_plot <- function(dat, th = 5){
-  det_plot(dat) + geom_vline(xintercept = find_uptick(dat, 5, down = T)) + geom_vline(xintercept = find_uptick(dat, 5, usePositivity = T, down = T), color = 'red', linetype = 3)
+  (det_plot(dat) 
+   + geom_vline(xintercept = find_uptick(dat, th, down = T)) 
+   + geom_vline(xintercept = find_uptick(dat, th, usePositivity = T, down = T), color = 'red', linetype = 3)
+  )
 }
