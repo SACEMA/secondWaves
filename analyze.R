@@ -7,6 +7,8 @@ suppressPackageStartupMessages({
 .args <- if (interactive()) c(
   "data/owid.rds", "featureFunctions.R", "ESP", "results/ESP/result.rds"
 ) else commandArgs(trailingOnly = TRUE)
+#' @example 
+#' .args <- gsub("ESP", "USA", .args)
 
 rawpth <- .args[1]
 funspth <- .args[2]
@@ -30,10 +32,9 @@ source(funspth)
 
 ref[find_uptick(new_cases_smoothed_per_million, len = 5), annotation := "uptick" ]
 ref[find_peaks(zz, m = 10), annotation := "peak" ]
-ref[find_valleys(zz, m = 10), annotation := "valley"]
+ref[find_valleys(zz, m = 10, inclTail = FALSE), annotation := "valley"]
 
-ref[annotation == "peak"]
-
+# TODO: not quite there
 wave_end_thresholds <- ref[
   annotation == "peak",
   .(
@@ -53,8 +54,9 @@ wave_end_thresholds[,{
     (date > wavedate) & (new_cases_smoothed_per_million < waveoff) & is.na(annotation),
     annotation := "below"
   ]
+  endwavedate <- ref[annotation == "below"][1, date]
   ref[
-    (date > wavedate) & (new_cases_smoothed_per_million > newwave) & (is.na(annotation) | (annotation != "peak")),
+    (date > endwavedate) & (new_cases_smoothed_per_million > newwave) & (is.na(annotation) | (annotation != "peak")),
     annotation := "above"
   ]
 }, by=.(wavedate = date)]
@@ -68,4 +70,4 @@ wave_end_thresholds[,{
 #'   geom_point(aes(y=new_cases_smoothed_per_million, color = annotation), data = function(dt) dt[!is.na(annotation)]) +
 #'   theme_minimal()
 
-saveRDS(res, tail(.args, 1))
+saveRDS(ref, tail(.args, 1))

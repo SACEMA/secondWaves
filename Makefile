@@ -8,6 +8,7 @@
 # typically want a shared folder, e.g. dropbox
 DATADIR ?= data
 OUTDIR ?= results
+FIGDIR ?= fig
 
 default: ${OUTDIR}/consolidated.rds
 
@@ -16,7 +17,7 @@ R = Rscript $^ $@
 Rstar = Rscript $^ $* $@
 
 # make the data directory if not already present
-${DATADIR} ${OUTDIR}:
+${DATADIR} ${OUTDIR} ${FIGDIR}:
 	mkdir -p $@
 
 ${DATADIR}/owid.rds: get_owid.R | ${DATADIR}
@@ -31,9 +32,14 @@ isosetup: ${DATADIR}/isos.csv ${OUTDIR}
 ${OUTDIR}/%/result.rds: analyze.R ${DATADIR}/owid.rds featureFunctions.R | isosetup
 	${Rstar}
 
+${FIGDIR}/%.png: visualize.R ${OUTDIR}/%/result.rds | ${FIGDIR}
+	${R}
+
 setup: isosetup
 
 demo: $(patsubst %,${OUTDIR}/%/result.rds,KEN JPN ZAF PAK USA ESP)
+
+demofigs: $(patsubst %,${FIGDIR}/%.png,KEN JPN ZAF PAK USA ESP)
 
 ${OUTDIR}/consolidated.rds: consolidate.R $(wildcard results/*/result.rds)
 	Rscript $< ${OUTDIR} $@

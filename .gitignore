@@ -43,3 +43,4 @@ vignettes/*.pdf
 # test analysis outputs
 data/*
 results/*
+fig/*
