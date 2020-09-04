@@ -21,7 +21,7 @@ p <- ggplot(ref) +
   geom_line(aes(y=zz, color = "zigzag")) +
   geom_point(
     aes(shape = annotation),
-    data = function(dt) dt[!is.na(annotation) & !(annotation %in% c("above","below"))]
+    data = function(dt) dt[!is.na(annotation) & !(annotation %in% c("below"))]
   ) +
   scale_x_date(
     "Date",
@@ -32,7 +32,7 @@ p <- ggplot(ref) +
   scale_y_continuous("reported 7-day mean case incidence per 1M") +
   scale_shape_manual(
     NULL,
-    values = c(peak=24, valley=25, uptick=23)
+    values = c(peak=17, above=24, upswing=23)
   ) +
   scale_color_manual(
     NULL,
