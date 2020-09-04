@@ -17,8 +17,8 @@ ref <- readRDS(rawpth)
 
 p <- ggplot(ref) + 
   aes(date, new_cases_smoothed_per_million) +
+#  geom_line(aes(y=zz, color = "zigzag")) +
   geom_line(aes(color = "observed")) +
-  geom_line(aes(y=zz, color = "zigzag")) +
   geom_point(
     aes(shape = annotation),
     data = function(dt) dt[!is.na(annotation) & !(annotation %in% c("below"))]
