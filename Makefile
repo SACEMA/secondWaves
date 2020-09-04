@@ -37,10 +37,11 @@ ${FIGDIR}/%.png: visualize.R ${OUTDIR}/%/result.rds | ${FIGDIR}
 
 setup: isosetup
 
-demo: $(patsubst %,${OUTDIR}/%/result.rds,KEN JPN ZAF PAK USA ESP)
+DEMOISOS ?= KEN JPN ZAF PAK USA ESP SWE SVN PRT CZE PER ISR FIN AUS BEL DNK FRA NLD SGP KOR MUS LVA DEU
 
-demofigs: $(patsubst %,${FIGDIR}/%.png,KEN JPN ZAF PAK USA ESP SWE SVN PRT) \
-	$(patsubst %,${FIGDIR}/%.png,CZE PER ISR FIN AUS BEL DNK FRA NLD SGP KOR MUS LVA)
+demo: $(patsubst %,${OUTDIR}/%/result.rds,${DEMOISOS})
+
+demofigs: $(patsubst %,${FIGDIR}/%.png,${DEMOISOS})
 
 ${OUTDIR}/consolidated.rds: consolidate.R $(wildcard results/*/result.rds)
 	Rscript $< ${OUTDIR} $@
