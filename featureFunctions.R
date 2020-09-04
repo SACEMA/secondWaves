@@ -28,8 +28,15 @@ find_uptick <- function(x, len = 7, prospective = F, down = FALSE){
   if(any(rr$values == lookFor & rr$lengths >= len)){
     use_runs <- which(rr$values == lookFor & rr$lengths >= len)
     ends <- cumsum(rr$lengths)[use_runs]
-    return(cumsum(rr$lengths)[use_runs-1] + 1)
+    # starts <- cumsum(rr$lengths)[use_runs-1] + 1
+    return(ends)
   } else{
     return(NA)
   }
+}
+
+find_upswing <- function(x, window = 7, threshold = 5) {
+  trends <- sign(diff(x))
+  res <- c(rep(0, window), RcppRoll::roll_sum(trends, window)) >= threshold
+  return(res)
 }

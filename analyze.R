@@ -4,11 +4,10 @@ suppressPackageStartupMessages({
   require(TTR)
 })
 
-.args <- if (interactive()) c(
-  "data/owid.rds", "featureFunctions.R", "ESP", "results/ESP/result.rds"
-) else commandArgs(trailingOnly = TRUE)
-#' @example 
-#' .args <- gsub("ESP", "USA", .args)
+.debug <- "FRA"
+.args <- if (interactive()) sprintf(c(
+  "data/owid.rds", "featureFunctions.R", "%s", "results/%s/result.rds"
+), .debug) else commandArgs(trailingOnly = TRUE)
 
 rawpth <- .args[1]
 funspth <- .args[2]
@@ -46,8 +45,13 @@ if (ref[, any(is.na(zz))]) {
 
 source(funspth)
 
-ref[find_uptick(new_cases_smoothed_per_million, len = 5), annotation := "uptick" ]
-ref[find_peaks(zz, m = 14), annotation := "peak" ]
+#ref[find_uptick(new_cases_smoothed_per_million, len = 5), annotation := "uptick" ]
+ref[find_peaks(zz, m = 14, minVal = 1), annotation := "peak" ]
+first_peak_date <- ref[annotation == "peak"][1, date]
+ref[date > first_peak_date, annotation := ifelse(
+  find_upswing(new_cases_smoothed_per_million) & is.na(annotation),
+  "upswing", annotation
+)]
 # ref[find_valleys(zz, m = 10, inclTail = FALSE), annotation := "valley"]
 
 newwave_threshold <- 1/3
@@ -68,7 +72,6 @@ ref[annotation == "peak", annotation := if (.N != 1) {
       ind <- .N
     }
   }
-  print(keep)
   newanno <- annotation
   newanno[!keep] <- NA_character_
   newanno
@@ -85,7 +88,7 @@ wave_end_thresholds <- ref[
 ]
 
 ref[
-  annotation == "uptick" & date < wave_end_thresholds[1, date],
+  annotation %in% c("uptick", "upswing") & date < wave_end_thresholds[1, date],
   annotation := NA_character_
 ]
 
