@@ -13,6 +13,14 @@ We will look into the [ZigZag](https://school.stockcharts.com/doku.php?id=techni
     
 ## Notes
 
+### 2020-09-05
+
+ - need resurge annotation; e.g. CZE
+ - above annotation should persist through new peak; e.g. ISR
+ - not quite right post labelling e.g. LVA, PAK
+ - "peak" labelling wrong for PRT, (maybe SGE?)
+ - second wave resurgence in SVE and ISR
+
 ### 2020-09-04
 
 - Errors

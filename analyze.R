@@ -50,7 +50,7 @@ source(funspth)
 ref[find_peaks(zz, m = 14, minVal = 1), point_annotation := "peak" ]
 first_peak_date <- ref[point_annotation == "peak"][1, date]
 ref[date > first_peak_date, range_annotation := ifelse(
-  find_upswing(new_cases_smoothed_per_million) & is.na(range_annotation),
+  find_upswing(new_cases_smoothed_per_million, 8, 6) & is.na(range_annotation),
   "upswing", range_annotation
 )]
 ref[date > first_peak_date, point_annotation := ifelse(
