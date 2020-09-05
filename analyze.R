@@ -18,7 +18,8 @@ ref <- readRDS(rawpth)[
   .(
     new_cases_smoothed_per_million,
     new_deaths_smoothed_per_million,
-    total_tests_per_thousand
+    total_tests_per_thousand,
+    positive_rate
   ),
   keyby = .(iso_code, location, date)
 ]
@@ -58,6 +59,14 @@ ref[date > first_peak_date, point_annotation := ifelse(
   "uptick", point_annotation
 )]
 
+ref[date > first_peak_date, range_annotation := ifelse(
+  find_upswing(positive_rate, 8, 6) & is.na(range_annotation),
+  "upswing", range_annotation
+)]
+ref[date > first_peak_date, point_annotation := ifelse(
+  find_upswing(positive_rate, 5, 5) & (is.na(point_annotation)),
+  "uptick", point_annotation
+)]
 
 # ref[find_valleys(zz, m = 10, inclTail = FALSE), annotation := "valley"]
 
