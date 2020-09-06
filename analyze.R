@@ -18,6 +18,9 @@ ref <- readRDS(rawpth)[
   .(
     new_cases_smoothed_per_million,
     new_deaths_smoothed_per_million,
+    total_cases_per_million, 
+    total_deaths_per_million,
+    new_tests_smoothed_per_thousand,
     total_tests_per_thousand,
     positive_rate
   ),
