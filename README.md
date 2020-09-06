@@ -29,6 +29,7 @@ We will look into the [ZigZag](https://school.stockcharts.com/doku.php?id=techni
     - Define resurgence based on co-occurence of uptick and upswing prior to end of wave - TODO
     - Incorporate positivity trends into defiitions of upswing and uptick - DONE; Carl please check that you're happy with this (analyze.R lines 62-69) - TODO
     - Consolidation step - TODO
+        - SEE ALSO: summary of epidemiology of second waves [here](https://docs.google.com/document/d/1yXXH1XypfLvQFGRCJ2dPrOaogii8_LbpyVpL9KRYCdk)
         - Classify dynamics for each country (typology) - second wave, resurgence, apparently controlled (MUS), other (how to describe LVA, PRT? simmering?)
         - For second waves: what proportion of the time is the peak of the second wave higher than the peak of the first wave? (will be a minimum as all others are indeterminate until end of second wave)
         - Time from first wave peak to end of first wave?
