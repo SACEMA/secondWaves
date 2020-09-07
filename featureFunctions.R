@@ -12,7 +12,12 @@ find_peaks <- function (x, m = 7, inclMax = F, inclTail = T, minVal = 0.1, brows
     if(all(v < x[i + 1]) & abs(x[i + 1]) >= minVal) return(i + 1) else return(numeric(0))
   })
   pks <- unlist(pks)
-  if(inclTail & all(tail(diff(x, na.pad = FALSE), m) > 0)) pks <- c(pks, length(x))
+  if(inclTail) {
+    fin <- tail(diff(x, na.pad = FALSE), m)
+    endpk <- any(is.na(fin)) & all(fin > 0, na.rm = TRUE)
+    if (endpk) endpk <- length(x) - which.max(!is.na(rev(fin))) + 1
+    if (endpk) pks <- c(pks, length(x))
+  }
   if(inclMax) pks <- sort(unique(pks, which.max(x)))
   pks
 }

@@ -29,11 +29,15 @@ ${DATADIR}/isos.csv: get_isos.R ${DATADIR}/owid.rds
 isosetup: ${DATADIR}/isos.csv ${OUTDIR}
 	while read line; do mkdir -p "${OUTDIR}/$${line}"; done < $<
 
-${OUTDIR}/%/result.rds: analyze.R ${DATADIR}/owid.rds featureFunctions.R | isosetup
+${OUTDIR}/%/result.rds: analyze.R ${DATADIR}/owid.rds featureFunctions.R thresholds.json | isosetup
 	${Rstar}
 
-${FIGDIR}/%.png: visualize.R ${OUTDIR}/%/result.rds | ${FIGDIR}
+#${FIGDIR}/%.png: visualize.R ${OUTDIR}/%/result.rds | ${FIGDIR}
+#	${R}
+
+${FIGDIR}/%.png: alt_visualize.R ${OUTDIR}/%/result.rds | ${FIGDIR}
 	${R}
+
 
 setup: isosetup
 

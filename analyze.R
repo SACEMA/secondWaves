@@ -1,150 +1,232 @@
-
 suppressPackageStartupMessages({
   require(data.table)
   require(TTR)
+  require(jsonlite)
 })
 
-.debug <- "GBR"
+#' for interactive use; n.b. that saving new `.debug` in the script resets
+#' the file modification time and thus associated `make` behavior
+.debug <- "AUS"
 .args <- if (interactive()) sprintf(c(
-  "data/owid.rds", "featureFunctions.R", "%s", "results/%s/result.rds"
+  "data/owid.rds", "featureFunctions.R", "thresholds.json", "%s", "results/%s/result.rds"
 ), .debug) else commandArgs(trailingOnly = TRUE)
 
 rawpth <- .args[1]
 funspth <- .args[2]
-targetiso <- .args[3]
+threshpth <- .args[3]
+targetiso <- .args[4]
+
+#' creates endwave_threshold, newwave_threshold
+attach(read_json(threshpth))
 
 ref <- readRDS(rawpth)[
   iso_code == targetiso,
   .(
-    new_cases_smoothed_per_million,
-    new_deaths_smoothed_per_million,
-    total_cases_per_million, 
-    total_deaths_per_million,
-    new_tests_smoothed_per_thousand,
-    total_tests_per_thousand,
+    inc_cases = new_cases_smoothed_per_million,
+    inc_deaths = new_deaths_smoothed_per_million,
+    cum_cases = total_cases_per_million, 
+    cum_deaths = total_deaths_per_million,
+    inc_tests = new_tests_smoothed_per_thousand,
+    cum_tests = total_tests_per_thousand, # n.b. no smoothed available in raw data
     positive_rate
   ),
   keyby = .(iso_code, location, date)
 ]
 
-# censor any leading NAs in new_cases_smoothed_per_million
-if (ref[1, is.na(new_cases_smoothed_per_million)]) ref <- ref[ 
-  which.max(!is.na(new_cases_smoothed_per_million)):.N
+#' censor any leading NAs in new_cases_smoothed_per_million
+if (ref[1, is.na(inc_cases)]) ref <- ref[ 
+  which.max(!is.na(inc_cases)):.N
 ]
 
-ref[, zz := ZigZag(new_cases_smoothed_per_million, 15) ]
+#' diagnostics
+#' assert: no missing days
+stopifnot(ref[, all(diff(date)==1)])
+
+ref[, endwave := {
+  initial <- Reduce(max, inc_cases, accumulate = TRUE)*endwave_threshold
+  tfrle <- rle(inc_cases < initial)
+  while(any(tfrle$lengths[tfrle$values] > 1)) {
+    # take the first hit w/ length > 1
+    restart_ind <- head(
+      cumsum(tfrle$lengths)+1, -1
+    )[
+      tail(tfrle$values, -1)
+    ][tfrle$lengths[tfrle$values] > 1][1]+1
+    initial[restart_ind:.N] <- Reduce(max, inc_cases[restart_ind:.N], accumulate = TRUE)*endwave_threshold
+    tfrle <- rle(inc_cases < initial)
+  }
+  initial
+}]
+
+#' whenever `endwave` criteria is below .1, set it to 0
+ref[endwave < 0.1, endwave := 0]
+
+ref[, newwave := {
+  initial <- Reduce(max, inc_cases, accumulate = TRUE)*newwave_threshold
+  endedwave <- Reduce(any, inc_cases < endwave, accumulate = TRUE)
+  tfrle <- rle((inc_cases > initial) & (endedwave))
+  while(any(tfrle$lengths[tfrle$values] > 1)) {
+    # take the first hit w/ length > 1
+    restart_ind <- head(
+      cumsum(tfrle$lengths)+1, -1
+    )[
+      tail(tfrle$values, -1)
+    ][tfrle$lengths[tfrle$values] > 1][1]+1
+    initial[restart_ind:.N] <- Reduce(max, inc_cases[restart_ind:.N], accumulate = TRUE)*newwave_threshold
+    endedwave[restart_ind:.N] <- Reduce(any, inc_cases[restart_ind:.N] < endwave[restart_ind:.N], accumulate = TRUE)
+    tfrle <- rle((inc_cases > initial) & (endedwave))
+  }
+  initial
+}]
+
+#' @examples 
+#' p <- ggplot(ref) + aes(date) +
+#'  geom_line(aes(y=endwave, color="endwave", linetype="threshold"), alpha = 0.5) +
+#'  geom_line(aes(y=newwave, color="newwave", linetype="threshold"), alpha = 0.5) +
+#'  geom_line(aes(y=inc_cases, color="observed", linetype="observed")) +
+#'  coord_cartesian(expand = FALSE, clip = "off") +
+#'  scale_x_date(
+#'    NULL, date_breaks = "months", date_labels = "%b"
+#'  ) +
+#'  scale_y_continuous("Incidence") +
+#'  scale_color_manual(
+#'    NULL,
+#'    labels = c(observed="Reported", endwave="End Wave Threshold", newwave="New Wave Threshold"),
+#'    values = c(observed="black", endwave="dodgerblue", newwave="firebrick"),
+#'    guide = guide_legend(override.aes = list(linetype = c("dashed", "dashed", "solid")))
+#'  ) +
+#'  scale_linetype_manual(
+#'    NULL,
+#'    values = c(threshold="dashed", observed="solid"),
+#'    guide = "none"
+#'  ) +
+#'  theme_minimal() +
+#'  theme(
+#'    legend.position = c(0, 1), legend.justification = c(0, 1)
+#'  )
+
+ref[, range_annotation := {
+  bcrit <- inc_cases < endwave
+  acrit <- inc_cases > newwave
+  
+  below <- Reduce(any, bcrit, accumulate = TRUE)
+  above <- Reduce(any, acrit & below, accumulate = TRUE)
+  
+  while (any(below & above)) {
+    ind <- which(below & above)[1]
+    slc <- ind:.N
+    below[slc] <- Reduce(any, bcrit[slc], accumulate = TRUE)
+    # above is now TRUE until we hit a below
+    newover <- Reduce(all, !below[slc], accumulate = TRUE)
+    endover <- which.max(!newover)
+    if (endover != 1) slc <- ind:(ind+endover-1)
+    above[slc] <- TRUE
+  }
+  ifelse(
+    below,
+    "endwave", ifelse(above,
+    "newwave",
+    NA_character_
+    )
+  )
+}]
+
+#' @examples 
+#' p + geom_bar(
+#'   aes(y=inc_cases, fill=range_annotation),
+#'   data = function(dt) dt[!is.na(range_annotation)],
+#'   width = 1, stat = "identity", alpha = 0.1
+#' ) +
+#' scale_fill_manual(
+#'   NULL,
+#'   labels = c(endwave = "Post Wave", newwave = "New Wave"),
+#'   values = c(endwave = "dodgerblue", newwave = "firebrick")
+#' )
+
+ref[, zz := ZigZag(inc_cases, 15) ]
 ref[, point_annotation := NA_character_ ]
-ref[, range_annotation := NA_character_ ]
 
 # assert: is.na(zz) is only at end of series
-if (ref[, any(is.na(zz))]) {
-  lastcertain <- ref[,which.max(is.na(zz))]-1
-  ref[
-    (lastcertain+1):.N,
-    c("zz","range_annotation") := .(
-      ref[lastcertain, zz],
-      "zz_NA"
-    )
-  ]
-}
+# if (ref[, any(is.na(zz))]) {
+#   lastcertain <- ref[,which.max(is.na(zz))]-1
+#   ref[
+#     (lastcertain+1):.N,
+#     c("zz","range_annotation") := .(
+#       ref[lastcertain, zz],
+#       "zz_NA"
+#     )
+#   ]
+# }
 
 source(funspth)
 
 #ref[find_uptick(new_cases_smoothed_per_million, len = 5), annotation := "uptick" ]
-ref[find_peaks(zz, m = 14, minVal = 1), point_annotation := "peak" ]
-first_peak_date <- ref[point_annotation == "peak"][1, date]
-ref[date > first_peak_date, range_annotation := ifelse(
-  is.na(range_annotation) &
-  (find_upswing(new_cases_smoothed_per_million, 8, 6) + find_upswing(positive_rate, 8, 6)),
-  "upswing", range_annotation
-)]
-ref[date > first_peak_date, point_annotation := ifelse(
-  is.na(point_annotation) &
-  (find_upswing(new_cases_smoothed_per_million, 5, 5) + find_upswing(positive_rate, 5, 5)),
-  "uptick", point_annotation
-)]
-
-# ref[find_valleys(zz, m = 10, inclTail = FALSE), annotation := "valley"]
-
-newwave_threshold <- .33
-endwave_threshold <- .15
-#' censor any peak annotations that are below new wave criteria
-#' for most recent wave
-#' b/c subsequent wave / resurgence peaks could be lower / higher
-ref[point_annotation == "peak", point_annotation := if (.N != 1) {
-  ind <- 1; keep <- rep(TRUE, .N)
-  while(ind < .N) {
-    reflvl <- new_cases_smoothed_per_million[ind]*newwave_threshold
-    slc <- new_cases_smoothed_per_million[(ind+1):.N] > reflvl
-    if (any(slc)) {
-      newind <- ind + which.max(slc)
-      if (ind + 1 != newind) keep[(ind+1):(newind-1)] <- FALSE
-      ind <- newind
-    } else {
-      keep[(ind+1):.N] <- FALSE
-      ind <- .N
-    }
-  }
-  newanno <- point_annotation
-  newanno[!keep] <- NA_character_
-  newanno
-} else "peak" ]
-
-# TODO: not quite there
-wave_end_thresholds <- ref[
-  point_annotation == "peak",
-  .(
-    waveoff = new_cases_smoothed_per_million * endwave_threshold,
-    newwave = new_cases_smoothed_per_million * newwave_threshold,
-    date
+ref[
+  find_peaks(zz, m = 14, minVal = 1),
+  point_annotation := ifelse(
+    is.na(range_annotation) | (range_annotation != "endwave"),
+    "peak", NA_character_
   )
 ]
+first_peak_date <- ref[point_annotation == "peak"][1, date]
 
-# TODO: consider keeping annotation prior to first peak
-ref[
-  range_annotation == "upswing" & date < wave_end_thresholds[1, date],
-  range_annotation := NA_character_
-]
-ref[
-  point_annotation == "uptick" & date < wave_end_thresholds[1, date],
-  point_annotation := NA_character_
-]
+ref[date > first_peak_date, range_annotation := {
+  hits <- find_upswing(inc_cases, 8, 6) | find_upswing(positive_rate, 8, 6)
+  hits[is.na(hits)] <- FALSE
+  fifelse(
+    (is.na(range_annotation) | (range_annotation != "newwave")) & hits,
+    yes="upswing", no=range_annotation
+  )
+}]
 
-wave_end_thresholds[,{
-  ref[
-    (date > wavedate) & (new_cases_smoothed_per_million < waveoff) & is.na(range_annotation),
-    range_annotation := "below"
-  ]
-  # TODO: how does this work if there is no first below?
-  endwavedate <- ref[range_annotation == "below"][1, date]
-  if (!is.na(endwavedate)) {
-    ref[
-      (date > endwavedate) & (new_cases_smoothed_per_million > newwave),
-      range_annotation := "above"
-    ]
-    newwavedate <- ref[(date > endwavedate) & range_annotation == "above"][1, date]
-    if (!is.na(newwavedate)) ref[
-       between(date, endwavedate, newwavedate, incbounds = F) & is.na(range_annotation),
-       range_annotation := "post"
-    ]
-  }
-}, by=.(wavedate = date)]
+ref[date > first_peak_date, point_annotation := {
+  hits <- find_upswing(inc_cases, 5, 5) | find_upswing(positive_rate, 5, 5)
+  hits[is.na(hits)] <- FALSE
+  fifelse(
+    is.na(point_annotation) & hits,
+    yes="uptick", no=point_annotation
+  )
+}]
 
-ref[range_annotation == "above" & point_annotation == "uptick", point_annotation := NA_character_ ]
+ref[, range_annotation := {
+  # for each run of upswings, if it contains an uptick
+  # convert run to a resurgence from first uptick
+  up <- (!is.na(range_annotation) & (range_annotation %in% c("upswing", "resurge")))[-1]
+  both <- up & (
+    !is.na(point_annotation) & (point_annotation == "uptick")
+  )[-1]
+  resurge <- Reduce(
+    function(was, state) state >= (2-was), up + both, init = FALSE, accumulate = TRUE
+  )
+  newanno <- range_annotation
+  newanno[resurge] <- "resurge"
+  newanno
+}]
 
-ref$range_annotation <- factor(ref$range_annotation, levels = c("below", "post", "upswing", "above"), ordered = TRUE)
-ref$point_annotation <- factor(ref$point_annotation, levels = c("peak", "uptick"), ordered = TRUE)
+#' @examples
+#' p + geom_bar(
+#'   aes(y=inc_cases, fill=range_annotation),
+#'   data = function(dt) dt[!is.na(range_annotation)],
+#'   width = 1, stat = "identity", alpha = 0.2
+#' ) +
+#' geom_point(
+#'   aes(y=inc_cases, shape=point_annotation, size=(point_annotation == "peak")),
+#'   data = function(dt) dt[!is.na(point_annotation)]
+#' ) +
+#' scale_fill_manual(
+#'   NULL,
+#'   labels = c(endwave = "Post Wave", newwave = "New Wave", upswing = "Upswing", resurge = "Resurgence"),
+#'   values = c(endwave = "dodgerblue", newwave = "firebrick", upswing = "yellow", resurge = "darkorange")
+#' ) +
+#' scale_shape_manual(
+#'   NULL,
+#'   values = c(peak=17, uptick=24),
+#'   guide = guide_legend(override.aes=list(size=c(3,1)))
+#' ) +
+#' scale_size_manual(NULL, values=c(`TRUE`=3,`FALSE`=1))
 
-#' TODO: from USA example:
-#'  - don't set / undo valley label if not in below territory
+ref[, range_annotation := factor(range_annotation, levels = c("endwave","upswing","resurge","newwave"), ordered = TRUE)]
+ref[, point_annotation := factor(point_annotation, levels = c("peak","uptick"), ordered = TRUE)]
 
-#' @examples 
-#' require(ggplot2)
-#' ggplot(ref) + 
-#'   aes(date) +
-#'   geom_line(aes(y=new_cases_smoothed_per_million, color = "observed")) +
-#'   geom_line(aes(y=zz, color = "zigzag")) +
-#'   geom_point(aes(y=new_cases_smoothed_per_million, color = annotation), data = function(dt) dt[!is.na(annotation)]) +
-#'   theme_minimal()
 
 saveRDS(ref, tail(.args, 1))
