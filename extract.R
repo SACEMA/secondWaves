@@ -16,10 +16,13 @@ waves <- annotated.dt[
 ]
 
 done_first <- length(waves$values) > 0
+have_second <- length(waves$values) > 1
 done_more <- length(waves$values) > 2
 
 res <- data.table(
-  done_first = done_first, done_more = done_more
+  done_first = done_first,
+  have_second = have_second,
+  done_more = done_more
 )
 
 saveRDS(res, tail(.args, 1))
