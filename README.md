@@ -13,21 +13,21 @@ We will look into the [ZigZag](https://school.stockcharts.com/doku.php?id=techni
     
 ## Notes
 
-### 2020-09-05
+### 2020-09-07
 
- - need resurge annotation; e.g. CZE
- - above annotation should persist through new peak; e.g. ISR
- - not quite right post labelling e.g. LVA, PAK
- - "peak" labelling wrong for PRT, (maybe SGE?)
- - second wave resurgence in SVE and ISR
+- one thing that we will need to fix either conceptually or calculationally in the future: it is possible to end a wave without having a peak (because peak was < 10)
+
+- Can these notes be removed? 
+    - need resurge annotation; e.g. CZE
+   - above annotation should persist through new peak; e.g. ISR
+   - not quite right post labelling e.g. LVA, PAK
+   - "peak" labelling wrong for PRT, (maybe SGE?)
+   - second wave resurgence in SVE and ISR
 
 - Errors
-    - UGA (Error in roll_sum_impl(x, as.integer(n), as.numeric(weights), as.integer(by),: negative length vectors are not allowed)
+    - None currently identified
 - Methodology notes
-    - Sometimes 'above' seems to be defined based on the second peak rather than the first (see BEL, NLD, SVN, DNK - second wave occurs too early, at 1/3 of the second peak?) - TODO 
     - We're not actually interested in valleys; on decline, we're interested in (1) point where first wave ends and (2) the trough (minimum value after the first peak but before the end of the second wave) - TODO PRIORITY
-    - Define resurgence based on co-occurence of uptick and upswing prior to end of wave - TODO
-    - Incorporate positivity trends into defiitions of upswing and uptick - DONE; Carl please check that you're happy with this (analyze.R lines 62-69) - TODO
     - Consolidation step - TODO
         - SEE ALSO: summary of epidemiology of second waves [here](https://docs.google.com/document/d/1yXXH1XypfLvQFGRCJ2dPrOaogii8_LbpyVpL9KRYCdk)
         - At the end of the time-series, classify dynamics for each country (typology) - second wave, resurgence, apparently controlled (MUS), other (how to describe LVA, PRT? simmering?)
@@ -46,18 +46,16 @@ We will look into the [ZigZag](https://school.stockcharts.com/doku.php?id=techni
     - BEL: look into above definition - seems to occur at < 1/3 the first peak
     - CZE: example of major and minor resurgences (if we want to define these)
     - DEU: characterization probably the same as LVA (?), FIN - 'post-wave' (vigilance warranted)
-    - DNK: example of a second wave without a preceeding uptick (? - may change with uptick definition; second wave is preceded by an upswing)
-    - ESP: new upswing defintion less clear
     - FIN: very jaggedy - seems to have a spurious upswing - is it also an uptick?; increase at the end would probably qualify as an 'uptick' in any non-technical assessment but doesn't meet our criteria (does mean upswing criteria at the moment; revisit this as definitions change)
     - ISR: example of a resurgence during the second wave
     - JPN: poor lead time from indicators
     - KOR: example with upswings much earlier than second wave; should these be considered examples of false positive indicators? is there also a false negative? may need to define time windows - TODO
     - LVA: very jaggedy - how would we characterize what's going on here? slow burn? post-wave?
-    - NGA: might be an example where adding positivity indicator (upticks) important; jaggedy without resurgences (but multiple non-wave peaks); probably indicative of poor surveillance, but how would we classify it - just as still in first wave (seems appropriate, actually)
-    - NLD: look into above definition - seems to occur at < 1/3 the first peak (1/3 of second peak?); example of a (very minor) resurgence after which first wave ends - is this some form of false positive?
+    - NGA: jaggedy without resurgences (but multiple non-wave peaks); probably indicative of poor surveillance, but how would we classify it - just as still in first wave (seems appropriate, actually)
+    - NLD: look into 'above' definition - seems to occur at < 1/3 the first peak (1/3 of second peak?); example of a (very minor) resurgence after which first wave ends - is this some form of false positive?
     - PRT: jaggedy - has 3 peaks that aren't wave peaks and 2 short upswings and a resurgence
-    - SGP: example of a minor resurgence (or 2); example of upticks and upswing in positivity while cases going down
+    - SGP: example of a minor resurgence (2); example of upticks and upswing (no resurgence?) in positivity while cases going down
     - SRB: when second wave drops below 1/3 of first wave 'above' definition no longer met but doesn't really have a meaning; change viz? (see also: AUS, others)
-    - SVN: look into above definition - seems to occur at < 1/3 the first peak; example of major resurgence in second wave; example of a false negative (or is this just because of weirdness with 1/3 definition?)
+    - SVN: look into 'above' definition - seems to occur at < 1/3 the first peak; example of major resurgence in second wave; example of a false negative (or is this just because of weirdness with 1/3 definition?)
     - SWE: nice example of upticks indicating a resurgence (with current upswing definition, minor resurgence is dependent of including positivity)
     - USA: nice example of upticks indicating a resurgence
