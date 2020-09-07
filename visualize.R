@@ -52,9 +52,9 @@ p <- ggplot(ref) +
     "Range Indicators",
     breaks = levels(ref$range_annotation),
     labels = c(
-      above = "above 1/3rd",
-      below = "below 1/10th",
-      post = "between 1/10th & 1/3rd, not upswing",
+      above = "above 33%",
+      below = "below 15%",
+      post = "between 15% & 33%, not upswing",
       upswing = "upswing"
     ),
     values = c(
