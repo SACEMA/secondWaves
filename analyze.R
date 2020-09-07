@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
 
 #' for interactive use; n.b. that saving new `.debug` in the script resets
 #' the file modification time and thus associated `make` behavior
-.debug <- "AFG"
+.debug <- "NAM"
 .args <- if (interactive()) sprintf(c(
   "data/owid.rds", "featureFunctions.R", "thresholds.json", "%s", "results/%s/result.rds"
 ), .debug) else commandArgs(trailingOnly = TRUE)
@@ -44,23 +44,25 @@ if (ref[1, is.na(inc_cases)]) ref <- ref[
 if (ref[, !all(diff(date)==1)]) warning("missing dates")
 if (ref[, any(inc_cases < 0)]) warning("negative case incidence")
 
+min.end.wave <- 0.5
+
 ref[, endwave := {
   initial <- Reduce(max, inc_cases, accumulate = TRUE)*endwave_threshold
   #' whenever `endwave` criteria is below .5, set it to 0
-  initial[initial < 0.5] <- 0
-  tfrle <- rle((inc_cases >= 0) & (inc_cases < initial))
-  while(any(tfrle$lengths[tfrle$values] > 1)) {
-    # take the first hit w/ length > 1
-    restart_ind <- head(
-      cumsum(tfrle$lengths)+1, -1
-    )[
-      tail(tfrle$values, -1)
-    ][tfrle$lengths[tfrle$values] > 1][1]+1
-    
-    initial[restart_ind:.N] <- Reduce(max, inc_cases[restart_ind:.N], accumulate = TRUE)*endwave_threshold
-    initial[initial < 0.5] <- 0
-    
-    tfrle <- rle((inc_cases >= 0) & (inc_cases < initial))
+  initial[initial < min.end.wave] <- 0
+  tfrle <- rle(inc_cases < initial)
+  if (any(tfrle$values)) {
+    ind <- 1
+    while (ind <= sum(tfrle$values)) {
+      restart_ind <- cumsum(tfrle$lengths)[tfrle$values][ind] + 1
+      if (restart_ind <= .N) {
+        slc <- restart_ind:.N
+        initial[slc] <- Reduce(max, inc_cases[slc], accumulate = TRUE)*endwave_threshold
+        initial[initial < min.end.wave] <- 0
+        tfrle <- rle(inc_cases < initial)
+      }
+      ind <- ind + 1
+    }
   }
   initial
 }]
@@ -68,17 +70,19 @@ ref[, endwave := {
 ref[, newwave := {
   initial <- Reduce(max, inc_cases, accumulate = TRUE)*newwave_threshold
   endedwave <- Reduce(any, (inc_cases < endwave), accumulate = TRUE)
-  tfrle <- rle((inc_cases > initial) & (endedwave))
-  while(any(tfrle$lengths[tfrle$values] > 1)) {
-    # take the first hit w/ length > 1
-    restart_ind <- head(
-      cumsum(tfrle$lengths)+1, -1
-    )[
-      tail(tfrle$values, -1)
-    ][tfrle$lengths[tfrle$values] > 1][1]+1
-    initial[restart_ind:.N] <- Reduce(max, inc_cases[restart_ind:.N], accumulate = TRUE)*newwave_threshold
-    endedwave[restart_ind:.N] <- Reduce(any, inc_cases[restart_ind:.N] < endwave[restart_ind:.N], accumulate = TRUE)
-    tfrle <- rle((inc_cases > initial) & (endedwave))
+  tfrle <- rle((inc_cases > initial) & endedwave)
+  if (any(tfrle$values)) {
+    ind <- 1
+    while (ind <= sum(tfrle$values)) {
+      restart_ind <- cumsum(tfrle$lengths)[tfrle$values[-1]][ind] + 1
+      if (restart_ind <= .N) {
+        slc <- restart_ind:.N
+        initial[slc] <- Reduce(max, inc_cases[slc], accumulate = TRUE)*newwave_threshold
+        endedwave[slc] <- Reduce(any, inc_cases[slc] < endwave[slc], accumulate = TRUE)
+        tfrle <- rle((inc_cases > initial) & (endedwave))
+      }
+      ind <- ind + 1
+    }
   }
   initial
 }]
@@ -107,7 +111,7 @@ ref[, newwave := {
 #'  theme_minimal() +
 #'  theme(
 #'    legend.position = c(0, 1), legend.justification = c(0, 1)
-#'  )
+#'  ); p
 
 ref[, range_annotation := {
   bcrit <- inc_cases < endwave
@@ -172,23 +176,24 @@ ref[
 ]
 first_peak_date <- ref[point_annotation == "peak"][1, date]
 
-ref[date > first_peak_date, range_annotation := {
-  hits <- find_upswing(inc_cases, 8, 6) | find_upswing(positive_rate, 8, 6)
-  hits[is.na(hits)] <- FALSE
-  fifelse(
-    (is.na(range_annotation) | (range_annotation != "newwave")) & hits,
-    yes="upswing", no=range_annotation
-  )
-}]
+ref[date > first_peak_date, range_annotation := if (.N >= 8) {
+    hits <- find_upswing(inc_cases, 8, 6) | find_upswing(positive_rate, 8, 6)
+    hits[is.na(hits)] <- FALSE
+    fifelse(
+      (is.na(range_annotation) | (range_annotation != "newwave")) & hits,
+      yes="upswing", no=range_annotation
+    )
+  } else range_annotation
+]
 
-ref[date > first_peak_date, point_annotation := {
+ref[date > first_peak_date, point_annotation := if (.N >= 5) {
   hits <- find_upswing(inc_cases, 5, 5) | find_upswing(positive_rate, 5, 5)
   hits[is.na(hits)] <- FALSE
   fifelse(
     is.na(point_annotation) & hits,
     yes="uptick", no=point_annotation
   )
-}]
+} else point_annotation ]
 
 ref[, range_annotation := {
   # for each run of upswings, if it contains an uptick

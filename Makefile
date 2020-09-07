@@ -47,9 +47,9 @@ setup: isosetup
 DEMOISOS ?= GBR AUS KEN JPN ZAF PAK USA ESP SWE SVN PRT CZE PER ISR FIN BEL DNK FRA NLD NGA BRA IND SRB SGP KOR MUS LVA DEU
 ALLISOS ?= $(shell cat ${DATADIR}/isos.csv)
 
-demo: $(patsubst %,${OUTDIR}/%/result.rds,${DEMOISOS})
+demo: $(patsubst %,${OUTDIR}/%/result.rds,${ALLISOS})
 
-demofigs: $(patsubst %,${FIGDIR}/%.png,${DEMOISOS})
+demofigs: $(patsubst %,${FIGDIR}/%.png,${ALLISOS})
 
 demostats: $(patsubst %,${OUTDIR}/%/stats.rds,${ALLISOS})
 
