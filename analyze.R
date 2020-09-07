@@ -4,7 +4,7 @@ suppressPackageStartupMessages({
   require(TTR)
 })
 
-.debug <- "KEN"
+.debug <- "GBR"
 .args <- if (interactive()) sprintf(c(
   "data/owid.rds", "featureFunctions.R", "%s", "results/%s/result.rds"
 ), .debug) else commandArgs(trailingOnly = TRUE)
@@ -54,26 +54,20 @@ source(funspth)
 ref[find_peaks(zz, m = 14, minVal = 1), point_annotation := "peak" ]
 first_peak_date <- ref[point_annotation == "peak"][1, date]
 ref[date > first_peak_date, range_annotation := ifelse(
-  find_upswing(new_cases_smoothed_per_million, 8, 6) & is.na(range_annotation),
+  is.na(range_annotation) &
+  (find_upswing(new_cases_smoothed_per_million, 8, 6) + find_upswing(positive_rate, 8, 6)),
   "upswing", range_annotation
 )]
 ref[date > first_peak_date, point_annotation := ifelse(
-  find_upswing(new_cases_smoothed_per_million, 5, 5) & (is.na(point_annotation)),
-  "uptick", point_annotation
-)]
-
-ref[date > first_peak_date, range_annotation := ifelse(
-  find_upswing(positive_rate, 8, 6) & is.na(range_annotation),
-  "upswing", range_annotation
-)]
-ref[date > first_peak_date, point_annotation := ifelse(
-  find_upswing(positive_rate, 5, 5) & (is.na(point_annotation)),
+  is.na(point_annotation) &
+  (find_upswing(new_cases_smoothed_per_million, 5, 5) + find_upswing(positive_rate, 5, 5)),
   "uptick", point_annotation
 )]
 
 # ref[find_valleys(zz, m = 10, inclTail = FALSE), annotation := "valley"]
 
-newwave_threshold <- 1/3
+newwave_threshold <- .33
+endwave_threshold <- .15
 #' censor any peak annotations that are below new wave criteria
 #' for most recent wave
 #' b/c subsequent wave / resurgence peaks could be lower / higher
@@ -100,8 +94,8 @@ ref[point_annotation == "peak", point_annotation := if (.N != 1) {
 wave_end_thresholds <- ref[
   point_annotation == "peak",
   .(
-    waveoff = new_cases_smoothed_per_million / 10,
-    newwave = new_cases_smoothed_per_million / 3,
+    waveoff = new_cases_smoothed_per_million * endwave_threshold,
+    newwave = new_cases_smoothed_per_million * newwave_threshold,
     date
   )
 ]
