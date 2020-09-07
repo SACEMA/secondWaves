@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
 
 #' for interactive use; n.b. that saving new `.debug` in the script resets
 #' the file modification time and thus associated `make` behavior
-.debug <- "AUS"
+.debug <- "AFG"
 .args <- if (interactive()) sprintf(c(
   "data/owid.rds", "featureFunctions.R", "thresholds.json", "%s", "results/%s/result.rds"
 ), .debug) else commandArgs(trailingOnly = TRUE)
@@ -40,11 +40,15 @@ if (ref[1, is.na(inc_cases)]) ref <- ref[
 
 #' diagnostics
 #' assert: no missing days
-stopifnot(ref[, all(diff(date)==1)])
+
+if (ref[, !all(diff(date)==1)]) warning("missing dates")
+if (ref[, any(inc_cases < 0)]) warning("negative case incidence")
 
 ref[, endwave := {
   initial <- Reduce(max, inc_cases, accumulate = TRUE)*endwave_threshold
-  tfrle <- rle(inc_cases < initial)
+  #' whenever `endwave` criteria is below .5, set it to 0
+  initial[initial < 0.5] <- 0
+  tfrle <- rle((inc_cases >= 0) & (inc_cases < initial))
   while(any(tfrle$lengths[tfrle$values] > 1)) {
     # take the first hit w/ length > 1
     restart_ind <- head(
@@ -52,18 +56,18 @@ ref[, endwave := {
     )[
       tail(tfrle$values, -1)
     ][tfrle$lengths[tfrle$values] > 1][1]+1
+    
     initial[restart_ind:.N] <- Reduce(max, inc_cases[restart_ind:.N], accumulate = TRUE)*endwave_threshold
-    tfrle <- rle(inc_cases < initial)
+    initial[initial < 0.5] <- 0
+    
+    tfrle <- rle((inc_cases >= 0) & (inc_cases < initial))
   }
   initial
 }]
 
-#' whenever `endwave` criteria is below .1, set it to 0
-ref[endwave < 0.1, endwave := 0]
-
 ref[, newwave := {
   initial <- Reduce(max, inc_cases, accumulate = TRUE)*newwave_threshold
-  endedwave <- Reduce(any, inc_cases < endwave, accumulate = TRUE)
+  endedwave <- Reduce(any, (inc_cases < endwave), accumulate = TRUE)
   tfrle <- rle((inc_cases > initial) & (endedwave))
   while(any(tfrle$lengths[tfrle$values] > 1)) {
     # take the first hit w/ length > 1
@@ -118,9 +122,7 @@ ref[, range_annotation := {
     below[slc] <- Reduce(any, bcrit[slc], accumulate = TRUE)
     # above is now TRUE until we hit a below
     newover <- Reduce(all, !below[slc], accumulate = TRUE)
-    endover <- which.max(!newover)
-    if (endover != 1) slc <- ind:(ind+endover-1)
-    above[slc] <- TRUE
+    above[slc] <- newover | Reduce(any, acrit[slc] & below[slc], accumulate = TRUE)
   }
   ifelse(
     below,
@@ -210,7 +212,7 @@ ref[, range_annotation := {
 #'   width = 1, stat = "identity", alpha = 0.2
 #' ) +
 #' geom_point(
-#'   aes(y=inc_cases, shape=point_annotation, size=(point_annotation == "peak")),
+#'   aes(y=inc_cases, shape=factor(point_annotation, levels = c("peak","uptick")), size=(point_annotation == "peak")),
 #'   data = function(dt) dt[!is.na(point_annotation)]
 #' ) +
 #' scale_fill_manual(
@@ -219,7 +221,7 @@ ref[, range_annotation := {
 #'   values = c(endwave = "dodgerblue", newwave = "firebrick", upswing = "yellow", resurge = "darkorange")
 #' ) +
 #' scale_shape_manual(
-#'   NULL,
+#'   NULL, drop = F,
 #'   values = c(peak=17, uptick=24),
 #'   guide = guide_legend(override.aes=list(size=c(3,1)))
 #' ) +

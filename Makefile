@@ -32,6 +32,9 @@ isosetup: ${DATADIR}/isos.csv ${OUTDIR}
 ${OUTDIR}/%/result.rds: analyze.R ${DATADIR}/owid.rds featureFunctions.R thresholds.json | isosetup
 	${Rstar}
 
+${OUTDIR}/%/stats.rds: extract.R ${OUTDIR}/%/result.rds
+	${R}
+
 #${FIGDIR}/%.png: visualize.R ${OUTDIR}/%/result.rds | ${FIGDIR}
 #	${R}
 
@@ -42,11 +45,18 @@ ${FIGDIR}/%.png: alt_visualize.R ${OUTDIR}/%/result.rds | ${FIGDIR}
 setup: isosetup
 
 DEMOISOS ?= GBR AUS KEN JPN ZAF PAK USA ESP SWE SVN PRT CZE PER ISR FIN BEL DNK FRA NLD NGA BRA IND SRB SGP KOR MUS LVA DEU
+ALLISOS ?= $(shell cat ${DATADIR}/isos.csv)
 
 demo: $(patsubst %,${OUTDIR}/%/result.rds,${DEMOISOS})
 
 demofigs: $(patsubst %,${FIGDIR}/%.png,${DEMOISOS})
 
-${OUTDIR}/consolidated.rds: consolidate.R $(wildcard results/*/result.rds)
+demostats: $(patsubst %,${OUTDIR}/%/stats.rds,${ALLISOS})
+
+.PRECIOUS: ${OUTDIR}/%/stats.rds ${OUTDIR}/%/result.rds
+
+${OUTDIR}/consolidated.rds: consolidate.R $(wildcard results/*/stats.rds)
 	Rscript $< ${OUTDIR} $@
-	
+
+cleanisosetup:
+	rm -rf ${OUTDIR}
