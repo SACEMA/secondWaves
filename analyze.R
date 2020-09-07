@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
 
 #' for interactive use; n.b. that saving new `.debug` in the script resets
 #' the file modification time and thus associated `make` behavior
-.debug <- "NAM"
+.debug <- "CUB"
 .args <- if (interactive()) sprintf(c(
   "data/owid.rds", "featureFunctions.R", "thresholds.json", "%s", "results/%s/result.rds"
 ), .debug) else commandArgs(trailingOnly = TRUE)
@@ -54,7 +54,7 @@ ref[, endwave := {
   if (any(tfrle$values)) {
     ind <- 1
     while (ind <= sum(tfrle$values)) {
-      restart_ind <- cumsum(tfrle$lengths)[tfrle$values][ind] + 1
+      restart_ind <- cumsum(tfrle$lengths)[tfrle$values[-1]][ind] + 2
       if (restart_ind <= .N) {
         slc <- restart_ind:.N
         initial[slc] <- Reduce(max, inc_cases[slc], accumulate = TRUE)*endwave_threshold
@@ -74,7 +74,7 @@ ref[, newwave := {
   if (any(tfrle$values)) {
     ind <- 1
     while (ind <= sum(tfrle$values)) {
-      restart_ind <- cumsum(tfrle$lengths)[tfrle$values[-1]][ind] + 1
+      restart_ind <- cumsum(tfrle$lengths)[tfrle$values[-1]][ind] + 2
       if (restart_ind <= .N) {
         slc <- restart_ind:.N
         initial[slc] <- Reduce(max, inc_cases[slc], accumulate = TRUE)*newwave_threshold
@@ -113,6 +113,8 @@ ref[, newwave := {
 #'    legend.position = c(0, 1), legend.justification = c(0, 1)
 #'  ); p
 
+#' inc_cases <- ref$inc_cases; endwave <- ref$endwave; newwave <- ref$newwave
+ 
 ref[, range_annotation := {
   bcrit <- inc_cases < endwave
   acrit <- inc_cases > newwave
@@ -168,7 +170,7 @@ source(funspth)
 
 #ref[find_uptick(new_cases_smoothed_per_million, len = 5), annotation := "uptick" ]
 ref[
-  find_peaks(zz, m = 14, minVal = 1),
+  find_peaks(zz, m = 14, minVal = 10),
   point_annotation := ifelse(
     is.na(range_annotation) | (range_annotation != "endwave"),
     "peak", NA_character_

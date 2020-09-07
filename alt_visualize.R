@@ -37,11 +37,11 @@ p <- ggplot(ref) + aes(date) +
    NULL, drop = F,
    labels = c(observed="Reported", endwave="End Wave Threshold", newwave="New Wave Threshold"),
    values = c(observed="black", endwave="dodgerblue", newwave="firebrick"),
-   guide = guide_legend(override.aes = list(linetype = c("dashed", "dashed", "solid")))
+   guide = guide_legend(override.aes = list(linetype = c("longdash", "longdash", "solid")))
  ) +
  scale_linetype_manual(
    NULL, drop = F,
-   values = c(threshold="dashed", observed="solid"),
+   values = c(threshold="longdash", observed="solid"),
    guide = "none"
  ) +
  scale_fill_manual(
