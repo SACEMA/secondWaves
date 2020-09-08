@@ -1,0 +1,41 @@
+---
+title: "Summary text"
+author: "SACEMA"
+date: "9/8/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+n_cntrys_ended_first <- 57
+n_total_cntrys <- 113
+n_cntrys_mult_waves <- 29
+n_cntrys_mult_waves_ended <- 5
+time_to_end_first_wave <- c(med = 34, lwr = 20, upr = 50)
+CCpMP_end_first_wave_all <- c(med = 926, lwr = 313, upr = 2156)
+CCpMP_end_first_wave_has2 <- c(med = 346, lwr = 174, upr = 1633)
+CCpMP_end_first_wave_has1 <- c(med = 1382, lwr = 917, upr = 4363)
+ratio_peak_trough_inc <- c(med = 23, lwr = 15, upr = 84)
+ratio_peak_trough_pos <- c(med = 54, lwr = 26, upr = Inf)
+interwave_period <- c(med = 55, lwr = 17, upr = 72)
+resurg_days_4wk_prior_wave2 <- c(med = 0, lwr = 0, upr = 5)
+resurg_days_2wk_prior_wave2 <- c(med = 0, lwr = 0, upr = 4)
+n_enter_w2_within_4wk_first_resurg <- 11
+n_has_postwave_resurg <- 25
+n_w2_bigger <- 19
+n_w2_appear_smaller <- NA
+```
+
+## Summary text
+
+To date, `r n_cntrys_ended_first` countries of the `r n_total_cntrys` countries analyzed have concluded their first epidemic wave and, of these, `r n_cntrys_mult_waves` have experienced additional wave(s) and `r n_cntrys_mult_waves_ended` have seen one of more of those additional waves end. For those countries ending the first wave, the median time from the peak to the end of the first wave was `r time_to_end_first_wave['med']` days (Interquartile Range: `r time_to_end_first_wave['lwr']`-`r time_to_end_first_wave['upr']`), and the median number of cumulative confirmed cases per million population at the end of the first wave was `r CCpMP_end_first_wave_all['med']` (IQR: `r CCpMP_end_first_wave_all['lwr']`-`r CCpMP_end_first_wave_all['upr']`; `r CCpMP_end_first_wave_has2['med']`, IQR: `r CCpMP_end_first_wave_has2['lwr']`-`r CCpMP_end_first_wave_has2['upr']` for only those experiencing a second wave and `r CCpMP_end_first_wave_has1['med']`, IQR: `r CCpMP_end_first_wave_has1['lwr']`-`r CCpMP_end_first_wave_has1['upr']` for those not yet experiencing a second wave). The median ratio of the magnitude of the wave peak to the size of the post wave trough was `r ratio_peak_trough_inc['med']` (IQR: `r ratio_peak_trough_inc['lwr']`-`r ratio_peak_trough_inc['upr']`). The median ratio of test positivity at the peak of the first wave to the end of the first wave was `r ratio_peak_trough_pos['med']` (IQR: `r ratio_peak_trough_pos['lwr']`-`r ratio_peak_trough_pos['upr']`). The median time from the end of the first wave to the beginning of the second wave was `r interwave_period['med']` days (IQR: `r interwave_period['lwr']`-`r interwave_period['upr']`). The median number of days in a resurgence within the four weeks preceding the beginning of the second wave was `r resurg_days_4wk_prior_wave2['med']` (IQR: `r resurg_days_4wk_prior_wave2['lwr']`-`r resurg_days_4wk_prior_wave2['upr']`). The median number of days in a resurgence within the two weeks preceding the beginning of the second wave was `r resurg_days_2wk_prior_wave2['med']` (Range: `r resurg_days_2wk_prior_wave2['lwr']`-`r resurg_days_2wk_prior_wave2['upr']`). `r n_enter_w2_within_4wk_first_resurg` of the `r n_has_postwave_resurg` countries that have experienced a post-wave resurgence entered a second wave within four weeks of the beginning of the first resurgence after ending the initial wave. X of these countries also had at least one day identified as a resurgence prior to the month preceding the beginning of the second wave, and X of the X countries that have (a) concluded the first wave and (b) had at least one day identified as a resurgence have not yet experienced a second wave. In `r n_w2_bigger` of the `r n_cntrys_mult_waves` countries experiencing subsequent waves, the peak of those waves has exceeded the magnitude of the first wave peak, and `r n_w2_appear_smaller` countries appear to have experienced smaller peaks than in the first wave (though may yet resurge to a larger peak value).
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
