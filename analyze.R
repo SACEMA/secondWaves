@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
 
 #' for interactive use; n.b. that saving new `.debug` in the script resets
 #' the file modification time and thus associated `make` behavior
-.debug <- "CUB"
+.debug <- "PSE"
 .args <- if (interactive()) sprintf(c(
   "data/owid.rds", "featureFunctions.R", "thresholds.json", "%s", "results/%s/result.rds"
 ), .debug) else commandArgs(trailingOnly = TRUE)
@@ -46,7 +46,14 @@ if (ref[, any(inc_cases < 0)]) warning("negative case incidence")
 
 min.end.wave <- 0.5
 
-ref[, endwave := {
+ref[, endwave := 0 ]
+ref[, newwave := max(inc_cases, na.rm = TRUE) ]
+
+censor_til_10 <- if (ref[1, inc_cases < 10]) {
+  -(1:ref[,which.max(inc_cases >= 10)])
+} else 1:ref[,.N]
+
+ref[censor_til_10, endwave := {
   initial <- Reduce(max, inc_cases, accumulate = TRUE)*endwave_threshold
   #' whenever `endwave` criteria is below .5, set it to 0
   initial[initial < min.end.wave] <- 0
@@ -67,7 +74,7 @@ ref[, endwave := {
   initial
 }]
 
-ref[, newwave := {
+ref[censor_til_10, newwave := {
   initial <- Reduce(max, inc_cases, accumulate = TRUE)*newwave_threshold
   endedwave <- Reduce(any, (inc_cases < endwave), accumulate = TRUE)
   tfrle <- rle((inc_cases > initial) & endedwave)
