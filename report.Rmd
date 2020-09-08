@@ -7,22 +7,49 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-n_cntrys_ended_first <- 57
-n_total_cntrys <- 113
-n_cntrys_mult_waves <- 29
-n_cntrys_mult_waves_ended <- 5
-time_to_end_first_wave <- c(med = 34, lwr = 20, upr = 50)
-CCpMP_end_first_wave_all <- c(med = 926, lwr = 313, upr = 2156)
-CCpMP_end_first_wave_has2 <- c(med = 346, lwr = 174, upr = 1633)
-CCpMP_end_first_wave_has1 <- c(med = 1382, lwr = 917, upr = 4363)
-ratio_peak_trough_inc <- c(med = 23, lwr = 15, upr = 84)
-ratio_peak_trough_pos <- c(med = 54, lwr = 26, upr = Inf)
-interwave_period <- c(med = 55, lwr = 17, upr = 72)
-resurg_days_4wk_prior_wave2 <- c(med = 0, lwr = 0, upr = 5)
-resurg_days_2wk_prior_wave2 <- c(med = 0, lwr = 0, upr = 4)
-n_enter_w2_within_4wk_first_resurg <- 11
-n_has_postwave_resurg <- 25
-n_w2_bigger <- 19
+require(data.table)
+cons.dt <- readRDS("results/consolidated.rds")
+
+n_cntrys_ended_first <- cons.dt[,
+  sum(done_first, na.rm = TRUE)
+]
+n_total_cntrys <- cons.dt[,.N]
+n_cntrys_mult_waves <- cons.dt[,
+  sum(have_second, na.rm = TRUE)
+]
+n_cntrys_mult_waves_ended <- cons.dt[,
+  sum(done_more, na.rm = TRUE)
+]
+
+qnames <- c("lwr","med", "upr")
+
+time_to_end_first_wave <- cons.dt[
+  done_first == TRUE,
+  quantile(wave1timing, probs = c(.25, .5, .75))
+]
+names(time_to_end_first_wave) <- qnames
+
+CCpMP_end_first_wave_all <- cons.dt[done_first == TRUE, quantile(wave1cases, probs = c(.25, .5, .75))]
+CCpMP_end_first_wave_has2 <- cons.dt[have_second == TRUE, quantile(wave1cases, probs = c(.25, .5, .75))]
+CCpMP_end_first_wave_has1 <- cons.dt[(done_first == TRUE) & (have_second == FALSE), quantile(wave1cases, probs = c(.25, .5, .75), na.rm = TRUE)]
+
+names(CCpMP_end_first_wave_all) <- names(CCpMP_end_first_wave_has2) <- names(CCpMP_end_first_wave_has1) <- qnames
+
+ratio_peak_trough_inc <- cons.dt[, quantile(peaktotrough, probs = c(.25, .5, .75), na.rm = TRUE)]
+ratio_peak_trough_pos <- cons.dt[, quantile(tposratio, probs = c(.25, .5, .75), na.rm = TRUE)]
+
+names(ratio_peak_trough_inc) <- names(ratio_peak_trough_pos) <- qnames
+
+interwave_period <- cons.dt[, quantile(one_to_two, probs = c(.25, .5, .75), na.rm = TRUE)]
+names(interwave_period) <- qnames
+
+resurg_days_4wk_prior_wave2 <- cons.dt[, quantile(days_resurge_28, probs = c(.25, .5, .75), na.rm = TRUE)]
+resurg_days_2wk_prior_wave2 <- cons.dt[, quantile(days_resurge_14, probs = c(.25, .5, .75), na.rm = TRUE)]
+names(resurg_days_4wk_prior_wave2) <- names(resurg_days_2wk_prior_wave2) <- qnames
+
+n_enter_w2_within_4wk_first_resurg <- cons.dt[, sum(two_within_28, na.rm = TRUE)]
+n_has_postwave_resurg <- cons.dt[, sum(have_post_resurge, na.rm = TRUE)]
+n_w2_bigger <- cons.dt[, sum(greater_follow, na.rm = TRUE)]
 n_w2_appear_smaller <- NA
 ```
 
