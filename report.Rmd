@@ -23,28 +23,28 @@ n_cntrys_mult_waves_ended <- cons.dt[,
 
 qnames <- c("lwr","med", "upr")
 
-time_to_end_first_wave <- cons.dt[
+time_to_end_first_wave <- round(cons.dt[
   done_first == TRUE,
   quantile(wave1timing, probs = c(.25, .5, .75))
-]
+])
 names(time_to_end_first_wave) <- qnames
 
-CCpMP_end_first_wave_all <- cons.dt[done_first == TRUE, quantile(wave1cases, probs = c(.25, .5, .75))]
-CCpMP_end_first_wave_has2 <- cons.dt[have_second == TRUE, quantile(wave1cases, probs = c(.25, .5, .75))]
-CCpMP_end_first_wave_has1 <- cons.dt[(done_first == TRUE) & (have_second == FALSE), quantile(wave1cases, probs = c(.25, .5, .75), na.rm = TRUE)]
+CCpMP_end_first_wave_all <- round(cons.dt[done_first == TRUE, quantile(wave1cases, probs = c(.25, .5, .75))])
+CCpMP_end_first_wave_has2 <- round(cons.dt[have_second == TRUE, quantile(wave1cases, probs = c(.25, .5, .75))])
+CCpMP_end_first_wave_has1 <- round(cons.dt[(done_first == TRUE) & (have_second == FALSE), quantile(wave1cases, probs = c(.25, .5, .75), na.rm = TRUE)])
 
 names(CCpMP_end_first_wave_all) <- names(CCpMP_end_first_wave_has2) <- names(CCpMP_end_first_wave_has1) <- qnames
 
-ratio_peak_trough_inc <- cons.dt[, quantile(peaktotrough, probs = c(.25, .5, .75), na.rm = TRUE)]
-ratio_peak_trough_pos <- cons.dt[, quantile(tposratio, probs = c(.25, .5, .75), na.rm = TRUE)]
+ratio_peak_trough_inc <- round(cons.dt[, quantile(peaktotrough, probs = c(.25, .5, .75), na.rm = TRUE)])
+ratio_peak_trough_pos <- round(cons.dt[, quantile(tposratio, probs = c(.25, .5, .75), na.rm = TRUE)])
 
 names(ratio_peak_trough_inc) <- names(ratio_peak_trough_pos) <- qnames
 
-interwave_period <- cons.dt[, quantile(one_to_two, probs = c(.25, .5, .75), na.rm = TRUE)]
+interwave_period <- round(cons.dt[, quantile(one_to_two, probs = c(.25, .5, .75), na.rm = TRUE)])
 names(interwave_period) <- qnames
 
-resurg_days_4wk_prior_wave2 <- cons.dt[, quantile(days_resurge_28, probs = c(.25, .5, .75), na.rm = TRUE)]
-resurg_days_2wk_prior_wave2 <- cons.dt[, quantile(days_resurge_14, probs = c(.25, .5, .75), na.rm = TRUE)]
+resurg_days_4wk_prior_wave2 <- round(cons.dt[, quantile(days_resurge_28, probs = c(.25, .5, .75), na.rm = TRUE)])
+resurg_days_2wk_prior_wave2 <- round(cons.dt[, quantile(days_resurge_14, probs = c(.25, .5, .75), na.rm = TRUE)])
 names(resurg_days_4wk_prior_wave2) <- names(resurg_days_2wk_prior_wave2) <- qnames
 
 n_enter_w2_within_4wk_first_resurg <- cons.dt[, sum(two_within_28, na.rm = TRUE)]
