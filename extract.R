@@ -70,11 +70,17 @@ have_post_resurge <- if (done_first) {
   }
 } else NA
 
-two_within_28 <- if (have_second & have_post_resurge) {
-  (twostart - annotated.dt[date > edt][range_annotation == "resurge", date[1]]) <= 28
-} else if (done_first & have_post_resurge) {
-  FALSE
-} else NA
+two_within_28 <- if (!is.na(have_post_resurge) & have_post_resurge) {
+  rdt <- annotated.dt[date > edt][range_annotation == "resurge", date[1]]
+  if (have_second) {
+    (twostart - rdt) <= 28
+  } else {
+    lastdate <- annotated.dt[!is.na(inc_cases)][.N, date]
+    if (lastdate - rdt > 28) {
+      FALSE
+    } else NA
+  }
+} else NA 
 
 greater_follow <- if (have_second) {
   annotated.dt[date > pkdt, max(inc_cases, na.rm = TRUE)] > pk
