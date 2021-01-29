@@ -19,7 +19,7 @@ p <- ggplot(ref) + aes(date) +
  geom_bar(
    aes(y=inc_cases, fill=range_annotation),
    data = function(dt) dt[!is.na(range_annotation)],
-   width = 1, stat = "identity", alpha = 0.2
+   width = 1, stat = "identity", alpha = 0.6
  ) +
  geom_line(aes(y=endwave, color="endwave", linetype="threshold"), alpha = 0.5) +
  geom_line(aes(y=newwave, color="newwave", linetype="threshold"), alpha = 0.5) +
@@ -28,12 +28,13 @@ p <- ggplot(ref) + aes(date) +
    aes(y=inc_cases, shape=point_annotation, size=(point_annotation == "peak")),
    data = function(dt) dt[!is.na(point_annotation)]
  ) +
- coord_cartesian(expand = FALSE, clip = "off") +
+ coord_cartesian(expand = FALSE, clip = "on", ylim = c(1, 10000)) +
  scale_x_date(
    NULL, date_breaks = "months", date_labels = "%b"
  ) +
- scale_y_continuous("Incidence") +
- scale_color_manual(
+ # scale_y_continuous("Incidence per 1,000,000 population") +
+   scale_y_log10("Incidence per 1,000,000 population (log-scale)") +
+   scale_color_manual(
    NULL, drop = F,
    labels = c(observed="Reported", endwave="End Wave Threshold", newwave="New Wave Threshold"),
    values = c(observed="black", endwave="dodgerblue", newwave="firebrick"),
@@ -46,7 +47,7 @@ p <- ggplot(ref) + aes(date) +
  ) +
  scale_fill_manual(
    NULL, drop = F,
-   labels = c(endwave = "Post Wave", newwave = "New Wave", upswing = "Upswing", resurge = "Resurgence"),
+   labels = c(endwave = "Post Wave", newwave = "New Wave", upswing = "Upswing", resurge = "Sustained Increase"),
    values = c(endwave = "dodgerblue", newwave = "firebrick", upswing = "yellow", resurge = "darkorange")
  ) +
  scale_shape_manual(
