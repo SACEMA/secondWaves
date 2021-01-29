@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
 
 #' for interactive use; n.b. that saving new `.debug` in the script resets
 #' the file modification time and thus associated `make` behavior
-.debug <- "PSE"
+.debug <- "ISR"
 .args <- if (interactive()) sprintf(c(
   "data/owid.rds", "featureFunctions.R", "thresholds.json", "%s", "results/%s/result.rds"
 ), .debug) else commandArgs(trailingOnly = TRUE)
@@ -36,7 +36,12 @@ ref <- readRDS(rawpth)[
 #' censor any leading NAs in new_cases_smoothed_per_million
 if (ref[1, is.na(inc_cases)]) ref <- ref[ 
   which.max(!is.na(inc_cases)):.N
-]
+  ]
+
+if (ref[.N, is.na(inc_cases)]) ref <- ref[ 
+  1:(which.max(is.na(inc_cases)) - 1)
+  ]
+
 
 #' diagnostics
 #' assert: no missing days
