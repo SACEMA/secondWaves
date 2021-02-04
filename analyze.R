@@ -38,6 +38,7 @@ if (ref[1, is.na(inc_cases)]) ref <- ref[
   which.max(!is.na(inc_cases)):.N
   ]
 
+#' censor any trailing NAs in new_cases_smoothed_per_million
 if (ref[.N, is.na(inc_cases)]) ref <- ref[ 
   1:(which.max(is.na(inc_cases)) - 1)
   ]
