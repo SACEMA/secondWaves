@@ -3,7 +3,7 @@ suppressPackageStartupMessages({
   require(ggplot2)
 })
 
-.debug <- "FRA"
+.debug <- "ISR"
 .args <- if (interactive()) sprintf(c(
   "results/%s/result.rds", "fig/%s.png"
 ), .debug) else commandArgs(trailingOnly = TRUE)
@@ -28,12 +28,13 @@ p <- ggplot(ref) + aes(date) +
    aes(y=inc_cases, shape=point_annotation, size=(point_annotation == "peak")),
    data = function(dt) dt[!is.na(point_annotation)]
  ) +
- coord_cartesian(expand = FALSE, clip = "on", ylim = c(1, 10000)) +
- scale_x_date(
+ # coord_cartesian(expand = FALSE, clip = "on", ylim = c(1, 10000)) +
+   coord_cartesian(expand = FALSE, clip = "on", ylim = c(0, NA)) +
+   scale_x_date(
    NULL, date_breaks = "months", date_labels = "%b"
  ) +
- # scale_y_continuous("Incidence per 1,000,000 population") +
-   scale_y_log10("Incidence per 1,000,000 population (log-scale)") +
+ scale_y_continuous("Incidence per 1,000,000 population") +
+   # scale_y_log10("Incidence per 1,000,000 population (log-scale)") +
    scale_color_manual(
    NULL, drop = F,
    labels = c(observed="Reported", endwave="End Wave Threshold", newwave="New Wave Threshold"),
